@@ -6,3 +6,8 @@ http://blog.csdn.net/zxhoo/article/category/1800247
 
 python 爬虫
 http://blog.csdn.net/column/details/why-bug.html
+
+google host 获取
+http://serve.netsh.org/pub/gethosts.php
+
+http://blog.sina.com.cn/s/blog_6fa5aa4a01010wel.html
