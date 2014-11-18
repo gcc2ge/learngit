@@ -12,5 +12,10 @@ def testprime(n,t):
 	elif n%t==0:
 		return 0
 	else:
-		return testprime(n,t+1)
-prime(1000000)
+		return testprime(n,next(t))
+def next(n):
+	if n==2:
+		return 3
+	else:
+		return n+2
+prime(1000)
