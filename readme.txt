@@ -11,3 +11,7 @@ google host 获取
 http://serve.netsh.org/pub/gethosts.php
 
 http://blog.sina.com.cn/s/blog_6fa5aa4a01010wel.html
+
+
+google chorme frame
+http://rj.baidu.com/soft/detail/17803.html
