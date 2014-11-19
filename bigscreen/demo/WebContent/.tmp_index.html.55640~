@@ -1,0 +1,1090 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Demo</title>
+<link href="css/layout.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="./css/jquery.gridster.css" />
+  <link rel="stylesheet" type="text/css" href="css/demo.css"/>
+  <link rel="stylesheet" type="text/css" href="css/smartMenu.css"/>
+  <link rel="stylesheet" type="text/css" href="css/jPushMenu.css" />
+  <link rel="stylesheet" type="text/css" href="css/button.css" />
+  <link rel="stylesheet" type="text/css" href="css/dialogself.css" />
+  <link rel="stylesheet" type="text/css" href="js/tree_themes/SimpleTree.css"/>
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/jquery-smartMenu.js"></script>
+  <script src="./js/jquery.gridster.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" src="js/jquery-ui.js"></script>      
+  <script type="text/javascript" src="js/layer.min.js"></script>    
+  <script type="text/javascript" src="js/SimpleTree.js"></script>  
+  <script type="text/javascript" src="js/Math.uuid.js"></script>  
+  <script type="text/javascript" src="js/fullscreen.js"></script>  
+  <script src="./js/jPushMenu.js"></script>
+<script type="text/javascript">
+		var gridster;
+		var gridinited=0;
+		var $sizeable;
+		var hostname=window.location.protocol+"//"+window.location.host+"/demo";
+		function init(){
+			gridinited=0;
+			gridster = $(".gridster ul").gridster({
+		          widget_base_dimensions: [100, 55],
+		          widget_margins: [5, 5],
+				  min_cols: 10,
+				  helper: 'clone',
+				  draggable: {
+		            handle: '.moveable',
+					start: function (e, ui, $widget) {
+			        },
+			        drag:function(e,ui,$widget){
+			        },
+			        stop: function (e, ui, $widget) {
+						 gridster.$preview_holder.remove();
+			        }
+		          },
+	           	  resize: {
+		            enabled: true,
+		            start: function(e, ui, $widget) {
+						$sizeable=$widget.find(".sizeable").eq(0);
+						//overlay
+						var $div=$("<div class='overlay'></div>");
+						$div.css({
+							position:'absolute', 
+							display:"block",
+							width:$widget.width(),
+							height:$widget.height(),
+							left:$widget.find(".selfoverlay").position().left,
+							top:$widget.find(".selfoverlay").position().top
+						});
+						$widget.append($div);
+		            },
+		            resize: function(e, ui, $widget) {
+						
+						//需要修改
+						//console.info($widget.html());
+						$sizeable.width($widget.width());
+						$sizeable.height($widget.height());
+						
+						$widget.find(".overlay").eq(0).width($widget.width());
+						$widget.find(".overlay").eq(0).height($widget.height());
+						
+						if($widget.find("input[name='classname']").val()=='text'){
+							 $sizeable.css("line-height",$widget.height()+"px");
+						}else if($widget.find("input[name='classname']").val()=='pic'){
+							$sizeable.height($widget.height()-1);
+						}else if($widget.find("input[name='classname']").val()=='website'){
+							$sizeable.height($widget.height()-1);
+						}
+						//
+		            },
+
+		            stop: function(e, ui, $widget) {
+						$sizeable.width($widget.width());
+						$sizeable.height($widget.height());
+						
+						$widget.find(".overlay").eq(0).fadeOut("slow",function(){
+							$widget.find(".overlay").eq(0).remove();
+						})
+						
+						if($widget.find("input[name='classname']").val()=='text'){
+							 $sizeable.css("line-height",$widget.height()+"px");
+						}else if($widget.find("input[name='classname']").val()=='pic'){
+							$sizeable.height($widget.height()-1);
+						}
+						gridster.$resize_preview_holder.remove().css({
+					                'min-width': '',
+					                'min-height': ''
+					            });
+		            }
+		         }
+		        }).data('gridster');
+				//grid 插件初始化完成
+				gridinited=1;
+		}
+      
+		
+      $(function(){
+		//取出方案
+		showcase();
+		//初始化控件
+    	init();
+        //注册事件
+		registerinitedevent();
+        //初始化滑动菜单
+		initsildmenu();
+		//页面布局
+		layoutinit();
+		//初始化方案叶子节点
+		initcasenametree();
+		//注册window resize
+		registerwindowresize();
+		//编辑
+		initedit();
+
+		$(".window").draggable({
+			helper: "clone",
+			cursor: "move"
+		});
+		$("#rightdiv").droppable({
+			accept: '.window',
+			drop:function(event,ui){
+				if(ui.helper.find("input[name='classname']").val()=='pic'){//picture、	<span onclick="maxImageFun(this)" style="float:right">最大</span>
+					gridster.add_widget($('<li data-sizex="1" data-sizey="1">'+
+					'<div class="selfoverlay" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					  '<div class="moveable picture"><span name="picspan" class="pmmc"></span><span name="change" class="switchable" title="切换" onclick="changefunc(event)"></span><span class="editable" title="编辑"></span></div>'+				
+					'</div><div class="widgetcontent" >'+ui.helper.html()+
+					'</div></li>'),function(){
+						picContextMenu($(".moveable",this));
+					});
+					
+				}else if(ui.helper.find("input[name='classname']").val()=='website'){//website
+					gridster.add_widget($('<li data-sizex="1" data-sizey="1">'+
+					'<div class="selfoverlay" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					'<div class="moveable website" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					'<span name="websitespan" class="pmmc"></span><span onclick="maxIframefunc(this)" class="maxable" title="最大化"></span><span name="change" class="switchable"  title="切换" onclick="changefunc(event)"></span><span class="editable" title="编辑"></span></div>'+				
+					'</div><div class="widgetcontent" >'+ui.helper.html()+
+					'</div></li>'),function(){
+						//console.info($(this).html());
+						websiteContextMenu($(".moveable",this));
+					});
+					
+				}else if(ui.helper.find("input[name='classname']").val()=='text'){//文字
+					gridster.add_widget($('<li data-sizex="1" data-sizey="1">'+
+					'<div class="selfoverlay" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					  '<div class="moveable textedit"><span name="txtspan" class="pmmc"></span><span class="editable" title="编辑"></span></div>'+				
+					'</div><div class="widgetcontent" >'+ui.helper.html()+
+					'</div></li>'),function(){
+						txtContextMenu($(".moveable",this));
+					});
+				}
+			}
+		});
+      });
+	//注册事件
+	function registerinitedevent(){
+	  	//右击事件
+		registerMenuContext();
+		//remove事件 注册
+		registerRemove();
+	}
+	//初始化滑动菜单
+	function initsildmenu(){
+		$('.toggle-menu').jPushMenu();
+	}
+	//初始化表单 ["divname",this,function ok,function cancel]
+	function initform(){
+		var args=Array.prototype.slice.call(arguments);
+
+		$('#'+args[0]).css({ 
+			position:'absolute', 
+			left: ($(window).width() - $('#caseform').outerWidth())/2, 
+			top: ($(window).height() - $('#caseform').outerHeight())/3 + $(document).scrollTop() ,
+			display:"block"
+		}); 
+		//确认新建
+		$('#'+args[0]).find("input[name='okbtn']").unbind("click");
+		$('#'+args[0]).find("input[name='okbtn']").bind('click',function(){
+			args[2].apply(this,args[1]);
+			args[3]();
+		});
+		//取消新建
+		$('#'+args[0]).find("input[name='canclebtn']").unbind("click");
+		$('#'+args[0]).find("input[name='canclebtn']").bind('click',function(){
+			args[3]();
+			$('#'+args[0]).css("display","none");
+		});
+	}
+	//右击事件
+	 function registerMenuContext(){
+	 	websiteContextMenu($(".website"));
+		picContextMenu($(".picture"));
+		txtContextMenu($(".textedit"));
+	}
+	//屏幕新增
+	function addscreen(bh,mc,pmtype){
+		//
+		 var $domobj=$("#case .selected").parent();
+		 $domobj.addClass("folder");
+		 var $ul=$domobj.next("ul");
+		 //console.info($ul.length);
+		 if($ul.length){
+			 if($ul.find("li[name='"+bh+"']").length){
+				 $ul.find("li[name='"+bh+"']").html(mc);
+			 }else{
+				 $ul.append("<li name='"+bh+"' pmtype='"+pmtype+"'>"+mc+"</li>");
+			 }
+		 }else{
+			 var $li=$("<ul><li name='"+bh+"'  pmtype='"+pmtype+"'>"+mc+"</li></ul>");
+			 $li.insertAfter($domobj);
+		 //屏幕
+		}
+	}
+	//屏幕移除
+	function removescreen(bh){
+		//
+		if($("#case li[name='"+bh+"']").length){
+			var $ul=$("#case li[name='"+bh+"']").parent();
+			$("#case li[name='"+bh+"']").remove();
+			if($ul.find("li").length==0){
+				$ul.prev("li").removeClass("folder");
+				$ul.prev("li").removeClass("open");
+			}
+		}
+	}
+	//图片右击事件
+	function picContextMenu($t){
+		$t.smartMenu([
+			[{
+				text:"编辑图片",
+				func: function() {
+					initform("picdiv",$(this),function(t){
+							//表单数据
+							var bh=$("#picdiv input[name='picbh']").val();
+							var mc=$("#picdiv input[name='picmc']").val();
+							var pictitle=$("#picdiv input[name='pictitle']").val();
+							var picurl=$("#picdiv input[name='picurl']").val();
+							$(t).parents("li").find("img").attr("src",picurl);
+							
+							//标题
+							$(t).parents("li").find("span").each(function(k,v){
+								if($(this).text()=="图片"){
+									$(this).remove();
+								}
+							});
+							if($(t).parents("li").find(".tiptxt").length){
+								$(t).parents("li").find(".tiptxt").remove();
+							}
+							$(t).parents("li").find("span[name='picspan']").html(pictitle);
+							//设置屏幕id
+							$(t).parents("li").attr("pmid",bh);
+							//屏幕
+							addscreen(bh,mc,"pictype");
+							//修改
+							var $domobj=$(t).parents("li").find(".sizeable").parent();
+							$domobj.find("input[name='bh']").val(bh);
+							$domobj.find("input[name='mc']").val(mc);
+							$domobj.find("input[name='bt']").val(pictitle);
+							//隐藏
+							$("#picdiv").css("display","none");
+						},function(){
+							$("#picdiv input[name='picbh']").val("");
+							$("#picdiv input[name='picmc']").val("");
+							$("#picdiv input[name='pictitle']").val("");
+							$("#picdiv input[name='picurl']").val("");
+						}
+					);
+				}
+			}],[{
+				text:"移除",
+				func:function(){
+					var bh=$("#picdiv input[name='picbh']").val();
+					removescreen(bh);
+					gridster.remove_widget($(this).parents("li"));
+				}
+			}]
+		],{name:"picture",
+		   beforeShow:function(){
+		   		//编辑是赋值
+				var $domobj=$(this).parents("li").find(".sizeable").parent();
+				var bh=$domobj.find("input[name='bh']").val();
+				if(bh==null || bh==""){
+					bh=nextpmbh();
+				}
+				var mc=$domobj.find("input[name='mc']").val();
+				var title=$domobj.find("input[name='bt']").val();
+				$("#picdiv input[name='picbh']").val(bh);
+				$("#picdiv input[name='picmc']").val(mc);
+				$("#picdiv input[name='pictitle']").val(title);
+				$("#picdiv input[name='picurl']").val($(this).parents("li").find("img").attr("src"));
+	   		}
+	   });
+	}
+	//网页右击事件
+	function websiteContextMenu($t){
+		$t.smartMenu([
+			[{
+				text:"编辑网页",
+				func: function() {
+					initform("websitediv",$(this),function(t){
+							var bh=$("#websitediv input[name='websitebh']").val();
+							var mc=$("#websitediv input[name='websitemc']").val();
+							var title=$("#websitediv input[name='websitetitle']").val();
+							var url=$("#websitediv input[name='websiteurl']").val();
+							$(t).parents("li").find("iframe").attr("src",url);
+							$("#websitediv").css("display","none");
+							
+							//设置屏幕id
+							$(t).parents("li").attr("pmid",bh);
+							//屏幕
+							addscreen(bh,mc,"webtype");
+							
+							//标题
+							$(t).parents("li").find("span").each(function(k,v){
+								if($(this).text()=="网页"){
+									$(this).remove();
+								}
+							});
+							
+							var $imgdom =$(t).parents("li").find(".sizeable").eq(0);
+							if($imgdom.prop("tagName")=="IMG"){
+								$imgdom.remove(); 
+								$(t).parents("li").find(".tiptxt").remove();
+							} 
+							
+							$(t).parents("li").find(".sizeable").css("display","block"); 
+							$(t).parents("li").find("span[name='websitespan']").html(title);
+							
+							var $domobj=$(t).parents("li").find(".sizeable").parent();
+							$domobj.find("input[name='bh']").val(bh);
+							$domobj.find("input[name='mc']").val(mc);
+							$domobj.find("input[name='bt']").val(title);
+							//console.info($(t).prop("outerHTML"));
+						},function(){
+							$("#websitediv input[name='websitebh']").val("");
+							$("#websitediv input[name='websitemc']").val("");
+							$("#websitediv input[name='websitetitle']").val("");
+							$("#websitediv input[name='websiteurl']").val("");
+						}
+					);
+				}
+			}],[{
+				text:"移除",
+				func:function(){
+					var bh=$("#websitediv input[name='websitebh']").val();
+					removescreen(bh);
+					gridster.remove_widget($(this).parents("li"));
+				}
+			}]
+		],{name:"website",
+		   beforeShow:function(){
+		   		//编辑是赋值
+				var $domobj=$(this).parents("li").find(".sizeable").parent();
+				var bh=$domobj.find("input[name='bh']").val();
+				if(bh==null || bh==""){
+					bh=nextpmbh();
+				}
+				var mc=$domobj.find("input[name='mc']").val();
+				var title=$domobj.find("input[name='bt']").val();
+				$("#websitediv input[name='websitebh']").val(bh);
+				$("#websitediv input[name='websitemc']").val(mc);
+				$("#websitediv input[name='websitetitle']").val(title);
+				$("#websitediv input[name='websiteurl']").val($(this).parents("li").find("iframe").attr("src"));
+		   }
+		});
+	}
+	//文字右击事件
+	function txtContextMenu($t){
+		$t.smartMenu([
+			[{
+				text:"编辑文字",
+				func: function() {
+					initform("textdiv",$(this),function(t){
+							var bh=$("#textdiv input[name='txtbh']").val();
+							var mc=$("#textdiv input[name='txtmc']").val();
+							var content=$("#textdiv input[name='txtcontent']").val();
+							var size=$("#textdiv input[name='txtsize']").val();		
+							
+							var $imgdom =$(t).parents("li").find(".sizeable").eq(0);
+							if($imgdom.prop("tagName")=="IMG"){
+								$imgdom.remove(); 
+								$(t).parents("li").find(".tiptxt").remove();
+							} 
+							
+							$(t).parents("li").find(".sizeable").css("display","block"); 
+							$(t).parents("li").find(".sizeable").html(content); 
+							
+							addscreen(bh,mc,"txttype");
+							$(t).parents("li").find("span[name='txtspan']").html(mc);
+							if(size.indexOf(".px")!=-1){
+								$(t).parents("li").find(".sizeable").css("fontSize",size);
+							}else{
+								$(t).parents("li").find(".sizeable").css("fontSize",size);
+							}
+							var $domobj=$(t).parents("li").find(".sizeable").parent();
+							$domobj.css("line-height",$domobj.height()+"px");
+							$domobj.find("input[name='bh']").val(bh);
+							$domobj.find("input[name='mc']").val(mc);
+							$("#textdiv").css("display","none");
+						},function(){
+							$("#textdiv input[name='txtbh']").val("");
+							$("#textdiv input[name='txtmc']").val("");
+							$("#textdiv input[name='txtcontent']").val("");
+							$("#textdiv input[name='txtsize']").val("");	
+						}
+					);
+				}
+			}],[{
+				text:"移除",
+				func:function(){
+					var bh=$("#textdiv input[name='txtbh']").val();
+					removescreen(bh);
+					gridster.remove_widget($(this).parents("li"));
+				}
+			}]
+		],{name:"textedit",
+		   beforeShow:function(){
+		   		//编辑是赋值
+				var $domobj=$(this).parents("li").find(".sizeable").parent();
+				var bh=$domobj.find("input[name='bh']").val();
+				if(bh==null || bh==""){
+					bh=nextpmbh();
+				}
+				var mc=$domobj.find("input[name='mc']").val();
+				var title=$domobj.find("input[name='bt']").val();
+				$("#textdiv input[name='txtbh']").val(bh);
+				$("#textdiv input[name='txtmc']").val(mc);
+				$("#textdiv input[name='txtcontent']").val($domobj.find(".sizeable").html());
+				$("#textdiv input[name='txtsize']").val($domobj.find(".sizeable").css("fontSize"));	
+		   }
+		});
+	}
+	//remove事件 注册
+	function registerRemove(){
+		$(".removeable").unbind("click");
+		$(".removeable").bind("click",function(){
+			var id=$(this).prev().attr("caseid");
+			removecaseajax($(this),id)
+		});
+	}
+      ///最终保存
+      function finalsavecase(){
+    	  var $domobj=$("#case .selected").find("span").eq(0);
+    	  var id=$domobj.attr("caseid");
+    	  //屏幕html
+    	  var $pmhtml=$("#case .selected").parent().next("ul");
+    	  var pmstr="";
+    	  if($pmhtml.length){
+    		  pmstr=$pmhtml.prop("outerHTML");
+    	  }
+    	  modifycase({"id":id,"pmhtml":pmstr});
+      }
+      //修改
+      function modifycase(caseobj){
+    	  var id=caseobj.id;
+    	  var content=$("#rightdiv ul").html();
+    	  var pmhtml=caseobj.pmhtml
+    	  $.ajax({
+	           type: "POST",
+	           url: hostname+"/modifyservlet",
+	           data: {"content":content,"id":id,"pmhtml":pmhtml},
+	           dataType: "json",
+	           async:false,
+			   contentType: "application/x-www-form-urlencoded; charset=utf-8",
+	           success: function(data){
+				   if(data=="success"){
+		        	   //alert("方案保存成功");
+					   showalert("img/Success.png","方案保存成功");
+				   }else if(data=="fail"){
+				   		showalert("img/delete1.png","方案保存失败");
+				   }
+// 	          	 casesavepost(data.id,data.name);
+	           }
+	       });
+      }
+    ///保存方案
+		function savecase(caseobj){
+			var name=caseobj.name;
+			var content=$("#rightdiv ul").html();
+			 $.ajax({
+	           type: "POST",
+	           url: hostname+"/savecase",
+	           data: {"content":content,"name":name},
+	           dataType: "json",
+	           async:false,
+			   contentType: "application/x-www-form-urlencoded; charset=utf-8",
+	           success: function(data){
+	          	 casesavepost(data.id,data.name,"");
+	           }
+	       });
+		}
+		//获取所有的方案名称
+		function showcase(){
+			 $.ajax({
+	           type: "POST",
+	           url: hostname+"/holdallcase",
+	          // data: {"content":content,"name":name},
+	           async:false,
+	           dataType: "json",
+	           success: function(data){
+					$("#case ul").empty();
+				 	$.each(data,function(k,v){
+						casesavepost(v.id,v.name,v.pmhtml);
+					});
+	           }
+	       });
+		}
+    //获取一个方案名称
+	function holdcase(id){ 
+			$.ajax({
+	           type: "POST",
+	           url: hostname+"/holdcase",
+	           data: {"id":id},
+	           dataType: "json",
+	           async:false,
+	           success: function(data){
+	          	 	//加判断 是否有方案内容
+	          	 	if(data!=null){
+							//显示屏幕
+							var pmhtml=data.pmhtml;
+							$ul=$("span[caseid='"+id+"']").parents("li").next("ul");
+							$li=$("span[caseid='"+id+"']").parents("li");
+							if($ul.length){
+								$ul.remove();
+								if(pmhtml!=null && pmhtml!=""  && $(pmhtml).find("li").length){
+									$(pmhtml).insertAfter($li);
+									$li.addClass("folder");
+									$li.addClass("open");
+								}else{
+									//console.info("没有 html  内容");
+									$li.removeClass("folder");
+									$li.removeClass("open");
+								}
+							} 
+							
+							//首次加载 grid 插件未初始化
+							if(gridinited==0){
+								$("#rightdiv ul").empty();
+								$("#rightdiv ul").html(data.content);
+							}else if(gridinited==1){//grid 插件初始化完成
+								gridster.destroy(true); 
+								$("#rightdiv .gridster").html("<ul>"+data.content+"</ul>");
+								init();
+								registerinitedevent();
+							}
+	          	 	}else{
+// 	          	 		$("#rightdiv").append("<div class="gridster"><ul style="width:500px"></ul></div>");
+	          	 	}
+	           },error:function(){
+	//			 	alert("error");
+			 }
+       });
+	}
+    //后台删除
+	function removecaseajax($domobj,id){
+		$('#deldialog').css({ 
+			position:'absolute', 
+			left: ($(window).width() - $('#deldialog').outerWidth())/2, 
+			top: ($(window).height() - $('#deldialog').outerHeight())/2 + $(document).scrollTop() ,
+			display:"block"
+		}); 
+		$("#confrimdel").off("click");
+		$("#confrimdel").on("click",function(){
+			$('#deldialog').css({ 
+				display:"none"
+			});
+			$.ajax({
+	             type: "POST",
+	             url: hostname+"/removeonservlet",
+	             data: {"id":id},
+	             dataType: "json",
+	             async:false,
+	             success: function(data){
+	            	 //alert(data);
+	            	if(data=="success"){
+						$domobj.parents("li").next("ul").remove();
+	            		$domobj.parents("li").remove();
+						gridster.remove_all_widgets();
+						//alert("方案删除成功");
+						showalert("img/Success.png","方案删除成功");
+	            	}
+	             },error:function(){
+						showalert("img/delete1.png","删除失败");
+	//	            	 alert("删除失败");
+	             }
+	         });
+		});
+	}
+	//点击方案名称切换选中状态
+  	function casenamebindfunc(){
+		$("#case ul li div").bind("click",function(){
+			var clzzname=$(this).attr("class");
+			if(clzzname=="selected"){alert("1");
+				$(this).removeClass("selected");
+			}else{
+				//remove
+				gridster.remove_all_widgets();
+				//方案选中
+				casenameclick($(this).find("span").eq(0).attr("caseid"));
+				$(this).removeClass("unselected");
+				$(this).addClass("selected");
+				$(this).parent().siblings().find("div").attr("class","unselected");
+			}	
+			return false;
+		});
+	}
+    //点击方案名称
+	function casenameclick(caseid){
+		//显示方案内容
+		holdcase(caseid);
+	}
+	function showDiv(t) {
+      $(".moveable",t).css("display","block");
+    }
+	function hiddenDiv(t) {
+       $(".moveable",t).css("display","none");
+    }
+   	 //弹出新建方案界面
+	function savecasefunc(){
+		$('#caseform').css({ 
+			position:'absolute', 
+			left: ($(window).width() - $('#caseform').outerWidth())/2, 
+			top: ($(window).height() - $('#caseform').outerHeight())/2 + $(document).scrollTop() ,
+			display:"block"
+		}); 
+		//确认新建
+		$('#caseform').find("input[name='okbtn']").bind('click',function(){
+			var casename=$("input[name='casename']","#caseform").val();
+			//清空工作空间
+			clearworkspace();
+			//保存到后台
+			savecase({"name":casename});
+		});
+		//取消新建
+		$('#caseform').find("input[name='canclebtn']").bind('click',function(){
+			$('#caseform').css("display","none");
+			unbindclick();
+		});
+	}
+  	function clearworkspace(){ 
+  		gridster.destroy(true);
+		$("#rightdiv .gridster").html("<ul></ul>");
+		init();
+	}
+  	function casesavepost(caseid,casename,pmhtml){
+		var $li=$('<li><div><span caseid="'+caseid+'">'+casename+'</span>&nbsp;&nbsp;<span class="removeable"></span></div></li>');
+		$("#case > ul").append($li);
+		if(pmhtml!=null && pmhtml!="" && $(pmhtml).find("li").length){
+			$(pmhtml).insertAfter($li);
+			$li.addClass("folder");
+			$li.addClass("open");
+		}else{
+			$li.removeClass("folder");
+			$li.removeClass("open");
+		}
+		//绑定点击事件
+		$li.find("div").bind("click",function(){
+			var clzzname=$(this).attr("class");
+			if(clzzname=="selected"){
+				$(this).removeClass("selected");
+			}else{
+				//方案选中
+				casenameclick($(this).find("span").eq(0).attr("caseid"));
+				$(this).removeClass("unselected");
+				$(this).addClass("selected");
+				$(this).parent().siblings().find("div").attr("class","unselected");
+			}	
+			return false;
+		});
+		//绑定remove 事件
+		$li.find(".removeable").unbind("click");
+		$li.find(".removeable").bind("click",function(){
+			var id=$(this).prev().attr("caseid");
+			removecaseajax($(this),id)
+		});
+		//触发点击事件
+		$li.find("div").trigger("click");
+		
+		//新建方案表单 
+		unbindclick();
+		$('#caseform').css("display","none");
+	}
+	function unbindclick(){
+		$('#caseform').find("input[name='okbtn']").unbind("click");
+		$('#caseform').find("input[name='canclebtn']").unbind("click");
+	}
+	//预览方案
+	var prewidth,preheight,fullele,fullscreen=0;
+	function previewcase(){
+		fullele = document.getElementById('rightdiv'),
+		prewidth=$("#rightdiv").width();
+		preheight=$("#rightdiv").height();
+		$("#rightdiv").width($(window).width());
+		$("#rightdiv").height($(window).height());
+		window.fullScreenApi.requestFullScreen(fullele);
+		($("#rightdiv")[0]).addEventListener(fullScreenApi.fullScreenEventName, function() {
+			if (fullScreenApi.isFullScreen()) {
+				
+			} else {
+				fullele.style.width = prewidth + "px";
+				fullele.style.height = preheight + "px";
+				fullscreen=1;
+			}
+		}, true);
+	}
+	//最大化 iframe
+	function maxIframefunc(t){
+		var width=$(window).width()+'px';
+		var height=$(window).height()+'px';
+		$.layer({
+		    type: 2,
+		    shadeClose: true,
+		    title: false,
+		    closeBtn: [1, true],
+		    shade: [0.8, '#000'],
+		    border: [0],
+		    offset: ['',''],
+		    area: [($(window).width())+'px', ($(window).height()) +'px'],
+		    iframe: {src: $(t).parents("li").find("iframe").attr("src")}
+		}); 
+	}
+	//最大化 图片
+	function maxImageFun(t){
+		layer.photosPage({
+			title: 'test',		//标题
+			parent: $(t).parents("li").find("img").parent(),	//包含图片的父容器
+			start: 0		//开始索引
+		})
+	}
+	//注册window resize
+	function registerwindowresize(){
+		$(window).resize(function() {
+		  layoutinit();
+		});
+	}
+	//页面布局
+	function layoutinit(){
+		$("#container").css({
+			width:$(window).width(),
+			height:$(window).height()+ $(document).scrollTop() 
+		});
+		$("#mainContent").css({
+			width:$("#container").width(),
+			height:$("#container").height()-5
+		});
+		$("#sidebar").css({
+			height:$("#mainContent").height()
+		});
+		$("#case").css({
+			height:$("#sidebar").height()-53
+		});
+		$("#content").css({
+			height:$("#mainContent").height()
+		});
+		//, 		
+		if(fullscreen==1){
+			$("#rightdiv").css({
+				height:$("#mainContent").height()-30
+			});
+			fullscreen=0;
+		}else{
+			$("#rightdiv").css({
+				height:$("#mainContent").height()-30,
+				width:$("#content").width()
+			});
+		}	
+	}
+	//切换  click
+	function changefunc(e){
+		var pmid=$(e.target).parents("li").attr("pmid");
+		var $li=$("#case .selected").parent().next("ul").find("li").not("[pmtype='txttype']").not("[name='"+pmid+"']").clone();
+		var $c=$("#dropdiv").empty().append($("<li style='list-style:none;'>请选择要切换的屏幕</li>")).append($li);
+		$("#dropdiv").find("li").css({
+			"list-style":"none"
+		});
+		screenselect($(e.target));
+		$c.css({
+			position:'absolute', 
+			display:"block",
+			left:$(e.target).offset().left+$(e.target).outerWidth()/2,
+			top:$(e.target).offset().top+$(e.target).outerHeight()
+		});
+	}
+	
+	//选择屏幕 
+	function screenselect($targets){
+		
+		$("#dropdiv").off("mouseenter","li");
+		$("#dropdiv").on("mouseenter","li",function(){
+			$(this).addClass("limouseenter");
+		})
+		$("#dropdiv").off("mouseleave","li");
+		$("#dropdiv").on("mouseleave","li",function(){
+			$(this).removeClass("limouseenter");
+		})
+		$("#dropdiv").off("click","li");
+		$("#dropdiv").on("click","li",function(){
+			//下拉框ID
+			var nextid=$(this).attr("name");
+			var currentid=$targets.parents("li").attr("pmid");
+			if(nextid!=null && nextid!='' && nextid!=currentid){
+				swithcscreen($targets.parents("li[pmid='"+currentid+"']"),$(".gridster li[pmid='"+nextid+"']"));
+			}
+			//swithcscreen
+			$("#dropdiv").css("display","none");
+		})
+	}
+	//切换屏幕
+	function swithcscreen($current,$next){
+		
+		var currentId=$current.attr("pmid");
+		var nextId=$next.attr("pmid");
+		
+		var $cur_content=$($current.html());
+		var $next_content=$($next.html());
+		
+		
+		$current.empty().append($next_content);
+		$current.find(".sizeable").eq(0).width($current.width());
+		$current.find(".sizeable").eq(0).height($current.height()-5);
+		$current.attr("pmid",nextId);
+		$next.empty().append($cur_content);
+		$next.find(".sizeable").eq(0).width($next.width());
+		$next.find(".sizeable").eq(0).height($next.height()-5);
+		$next.attr("pmid",currentId);
+	}
+	//初始化树形结构
+	function initcasenametree(){
+		$(".st_tree").SimpleTree({
+			click:function(a){
+				if(!$(a).attr("hasChild"))
+					alert($(a).attr("ref"));
+			}
+		});
+	}
+	//获取屏幕编号
+	function nextpmbh(){
+		var pmid=Math.uuid();
+		//console.info(pmid);
+		return pmid;
+	}
+	//编辑
+	function initedit(){
+		$(".gridster").on("click",".editable",function(){
+			$(this).parents("div.moveable").trigger("oncontextmenu");
+		})
+	}
+	//取消删除
+	function cancledel(){
+		$("#deldialog").css("display","none");
+	}
+	function showalert(icon,text){
+		$('#diaalert').css('opacity', 1);
+		$('#diaalert').find("img").attr("src",icon);
+		$('#diaalert').find("span").html(text);
+		$('#diaalert').css({ 
+			position:'absolute', 
+			left: ($(window).width() - $('#caseform').outerWidth())/2, 
+			top: ($(window).height() - $('#caseform').outerHeight())/2 + $(document).scrollTop() ,
+			display:"block"
+		}); 
+		$('#diaalert').animate({opacity:'0'},2500,function(){
+			$('#diaalert').css({display:"none"});
+		});
+	}
+	
+    </script>
+</head>
+
+<body>
+<div style="right:0px;position:absolute">
+	<!--<button class="toggle-menu menu-right " >组件</button>-->
+	<input type="image" src="./img/left.jpg" class="toggle-menu menu-right" title="点击弹出组件" ></input>
+</div>
+<div class="cbp-spmenu cbp-spmenu-vertical cbp-spmenu-right">
+	<div class="window" >
+		<!--<span>图片</span>-->
+	    <input type="hidden" name="classname" value="pic"></input>
+		<input type="hidden" name="bh" />
+		<input type="hidden" name="mc" />
+		<input type="hidden" name="bt" />
+		<img class="sizeable" src="img/tipimg.jpg" alt="" title="" width="100%" height="100%"/>
+		<span class="tiptxt">图片展示</span>	
+	</div>
+	<div class="window" > 
+	 	<!--<span>网页</span>--> 
+	     <input type="hidden" name="classname" value="website"></input>
+		 <input type="hidden" name="bh" />
+		 <input type="hidden" name="mc" />
+	 	 <input type="hidden" name="bt" /> 
+		 <img class="sizeable" src="img/urlimg.jpg" alt="" title="" width="100%" height="100%"/>
+		 <span class="tiptxt">URL链接 </span>	
+		 
+    	 <iframe class="sizeable" style="display:none" width="100%" height="100%" src="http://192.10.110.91:8080/demo/" scrolling="no" frameborder="0"></iframe>
+	 </div>
+	<div class="window" > <!--style="line-height:80px"-->
+    	<input type="hidden" name="classname" value="text"></input> 
+		<input type="hidden" name="bh" />
+		<input type="hidden" name="mc" />
+		<input type="hidden" name="bt" />
+		<img class="sizeable" src="img/typeimg.png" alt="" title="" width="100%" height="100%"/>
+		<span class="tiptxt">文字显示</span>	
+	 	<span class="sizeable" style="font-size:12px;text-align:center;display:none;height:100%">输入文字 </span>	
+ 	</div>
+</div>
+
+<div id="container">
+ 
+  <div id="mainContent">
+    <div id="sidebar">
+		<div style="background:#E1E1E1;height:30px;text-align:center;line-height:30px;">
+			大屏方案
+		</div>
+	   <div id="case" class="st_tree" style="border:solid 1px #fff;height:100%">
+	   		<ul>
+	   			<li><a href="#" ref="hyjm">欢迎界面</a></li>
+				<li><a href="#" ref="xtgl">系统管理</a></li>
+			    <ul show="true">
+					<li><a href="#" ref="yhgl">用户管理</a></li>
+					<li><a href="#" ref="rzck">日志查看</a></li>
+				</ul>
+				<li><a href="#" ref="ckgl">仓库管理</a></li>
+			    <ul>
+					<li><a href="#" ref="kcgl">库存管理</a></li>
+					<li><a href="#" ref="shgl">收货管理</a></li>
+					<li><a href="#" ref="fhgl">发货管理</a></li>
+			        <ul>
+			            <li><a href="#" ref="yhgl">用户管理</a></li>
+			            <li><a href="#" ref="rzck">日志查看</a></li>
+			        </ul>
+				</ul>
+	   		</ul>
+		    
+		</div>
+    </div>
+    <div id="content">
+     	<div id="header">
+     		<button class='"positive"' onclick="savecasefunc();">    
+		        <img style="float:left" alt='' src='img/s20_open-folder-add256.png'>    
+		       	<span style="float:left;line-height:20px;display:block;height:20px">新建</span> 
+		    </button> 
+			<button class='"positive"' onclick="finalsavecase();">    
+		        <img style="float:left" alt='' src='img/s20_memorycard.png'>    
+		        <span style="float:left;line-height:20px;display:block;height:20px">保存</span> 
+		    </button> 
+	     	<button class='"positive"' onclick="previewcase();">    
+		        <img style="float:left" alt='' src='img/s20_zoom_in.png'>    
+		    	<span style="float:left;line-height:20px;display:block;height:20px">预览</span>    
+		    </button> 
+        	<!--<input type="button" value="新建方案" onclick="savecasefunc();" />
+            <input type="button" value="保存方案" onclick="finalsavecase();" />
+            <input type="button" value="预览方案" onclick="previewcase();"/>-->
+        </div>
+        <div id="rightdiv">
+        	<div class="gridster">
+			    <ul style="height:100%">
+			    </ul>
+		  </div>
+        </div>
+    </div>
+  </div>
+</div>
+<div id="caseform" class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">新建方案</td>
+        </tr>
+    	<tr>
+        	<td>方案名称</td>
+            <td><input type="text" name="casename"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="picdiv" class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">编辑图片</td>
+        </tr>
+        <tr>
+        	<td>屏幕编号</td>
+            <td><input type="text" name="picbh"/></td>
+        </tr>
+        <tr>
+        	<td>屏幕名称</td>
+            <td><input type="text" name="picmc"/></td>
+        </tr>
+    	<tr>
+        	<td>图片标题</td>
+            <td><input type="text" name="pictitle"/></td>
+        </tr>
+        <tr>
+        	<td>图片链接</td>
+            <td><input type="text" name="picurl"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="textdiv" class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">编辑文字</td>
+        </tr>
+        <tr>
+        	<td>屏幕编号</td>
+            <td><input type="text" name="txtbh"/></td>
+        </tr>
+        <tr>
+        	<td>屏幕名称</td>
+            <td><input type="text" name="txtmc"/></td>
+        </tr>
+    	<tr>
+        	<td>文字内容</td>
+            <td><input type="text" name="txtcontent"/></td>
+        </tr>
+        <tr>
+        	<td>文字大小</td>
+            <td><input type="text" name="txtsize"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="websitediv"  class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">编辑网页</td>
+        </tr>
+        <tr>
+        	<td>屏幕编号</td>
+            <td><input type="text" name="websitebh"/></td>
+        </tr>
+        <tr>
+        	<td>屏幕名称</td>
+            <td><input type="text" name="websitemc"/></td>
+        </tr>
+    	<tr>
+        	<td>网页标题</td>
+            <td><input type="text" name="websitetitle"/></td>
+        </tr>
+        <tr>
+        	<td>网页链接</td>
+            <td><input type="text" name="websiteurl"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="dropdiv" ></div>
+<div id="deldialog">
+	<span class="title">是否确认删除方案</span>
+	<div class="diacontent">
+		<div class="ys">
+			<img src="img/delete1.png" width="50" height="50">
+		</div>
+		<div class="ys" style="padding-left:10px">
+			是否确认删除，一旦删除无法恢复！
+		</div>
+		
+	</div>
+	<div class="btnconform">
+		<button id="confrimdel">确认</button>
+		<button style="margin-left: 36px;" onclick="cancledel()">取消</button>
+	</div>
+</div>
+<div id="diaalert">
+		<div class="ys">
+			<img src="" width="50" height="50">
+		</div>
+		<div class="ys" style="padding-left:10px">
+			<span></span>
+		</div>
+		
+</div>
+</body>
+</html>

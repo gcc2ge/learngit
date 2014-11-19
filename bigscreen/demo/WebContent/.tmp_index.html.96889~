@@ -1,0 +1,753 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Demo</title>
+<link href="css/layout.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="./css/jquery.gridster.css" />
+  <link rel="stylesheet" type="text/css" href="css/demo.css"/>
+  <link rel="stylesheet" type="text/css" href="css/smartMenu.css"/>
+  <link rel="stylesheet" type="text/css" href="css/jPushMenu.css" />
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/jquery-smartMenu.js"></script>
+  <script src="./js/jquery.gridster.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" src="js/jquery-ui.js"></script>      
+  <script type="text/javascript" src="js/layer.min.js"></script>      
+  <script src="./js/jPushMenu.js"></script>
+<script type="text/javascript">
+		var gridster;
+		var gridinited=0;
+		function init(){
+			gridinited=0;
+			gridster = $(".gridster ul").gridster({
+		          widget_base_dimensions: [100, 55],
+		          widget_margins: [5, 5],
+				 // min_cols: 10,
+				  helper: 'clone',
+				  draggable: {
+		            handle: '.moveable'
+		          },
+		          helper: 'clone',
+	           	  resize: {
+		            enabled: true,
+		            start: function(e, ui, $widget) {
+		            },
+		            resize: function(e, ui, $widget) {
+						//需要修改
+						//console.info($widget.html());
+						$widget.find(".sizeable").eq(0).width($widget.width());
+						$widget.find(".sizeable").eq(0).height($widget.height()-30);
+						//
+		            },
+
+		            stop: function(e, ui, $widget) {
+						$widget.find(".sizeable").eq(0).width($widget.width());
+						$widget.find(".sizeable").eq(0).height($widget.height()-30);
+		            }
+		         }, draggable: {
+				        start: function (e, ui, $widget) {
+				            var that = this , //to access gridster from inside onscroll
+				                oldScroll = $(document).scrollTop() //to calculate scroll change 
+				                obj = $(this.helper ? this.$helper : this.$player) //current draggable or helpe
+								//console.info(obj.prop("outerHTML"));
+				            $(document).on("scroll", function (e) {
+				                //calculate scroll change
+				                var curr = $(document).scrollTop()
+				                var diff = curr-oldScroll
+				                oldScroll = curr
+				                //add change to stored offset for gridster if not on edge
+				                if(!that.edge) that.drag_api.el_init_offset.top += diff 
+				
+				                //show change temporarily
+				                obj.css({
+				                    'top': parseFloat(obj.css("top")) + diff
+				                });
+				                
+				            })
+				        },
+				        drag:function(e,ui,$widget){
+				           //check if edge
+				           var pixelFromEdge=100
+				           this.edge= e.clientY< pixelFromEdge ||
+				           $("html")[0].clientHeight-e.clientY < pixelFromEdge
+				           
+				               
+				        },
+				        stop: function (e, ui, $widget) {
+				           $(document).off("scroll")
+				        }
+				    }
+		        }).data('gridster');
+				//grid 插件初始化完成
+				gridinited=1;
+		}
+      
+		
+      $(function(){
+		//取出方案
+		showcase();
+		//初始化控件
+    	init();
+        //注册事件
+		registerinitedevent();
+        //初始化滑动菜单
+		initsildmenu();
+		//页面布局
+		layoutinit();
+
+		$(".window").draggable({
+			helper: "clone",
+			cursor: "move"
+		});
+		$("#rightdiv").droppable({
+			accept: '.window',
+			drop:function(event,ui){
+				if(ui.helper.find("input[name='classname']").val()=='pic'){//picture、	<span onclick="maxImageFun(this)" style="float:right">最大</span>
+					gridster.add_widget($('<li data-sizex="1" data-sizey="1">'+
+					'<div class="selfoverlay" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					  '<div class="moveable picture"></div>'+				
+					'</div><div style="width:100%;height:30px">'+ui.helper.html()+
+					'</div></li>'),function(){
+						picContextMenu($(".moveable",this));
+					});
+					
+				}else if(ui.helper.find("input[name='classname']").val()=='website'){//website
+					gridster.add_widget($('<li data-sizex="1" data-sizey="1">'+
+					'<div class="selfoverlay" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					'<div class="moveable website" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					'<span name="websitespan"></span><span onclick="maxIframefunc(this)" style="float:right">最大</span></div>'+				
+					'</div><div style="width:100%;height:80%">'+ui.helper.html()+
+					'</div></li>'),function(){
+						//console.info($(this).html());
+						websiteContextMenu($(".moveable",this));
+					});
+					
+				}else if(ui.helper.find("input[name='classname']").val()=='text'){//文字
+					gridster.add_widget($('<li data-sizex="1" data-sizey="1">'+
+					'<div class="selfoverlay" onmouseover="showDiv(this)" onmouseout="hiddenDiv(this)">'+
+					  '<div class="moveable textedit"><span name="txtspan"></span></div>'+				
+					'</div><div style="width:100%;height:100%">'+ui.helper.html()+
+					'</div></li>'),function(){
+						txtContextMenu($(".moveable",this));
+					});
+				}
+			}
+		});
+      });
+	//注册事件
+	function registerinitedevent(){
+	  	//右击事件
+		registerMenuContext();
+		//remove事件 注册
+		registerRemove();
+	}
+	//初始化滑动菜单
+	function initsildmenu(){
+		$('.toggle-menu').jPushMenu();
+	}
+	//初始化表单 ["divname",this,function ok,function cancel]
+	function initform(){
+		var args=Array.prototype.slice.call(arguments);
+
+		$('#'+args[0]).css({ 
+			position:'absolute', 
+			left: ($(window).width() - $('#caseform').outerWidth())/2, 
+			top: ($(window).height() - $('#caseform').outerHeight())/3 + $(document).scrollTop() ,
+			display:"block"
+		}); 
+		//确认新建
+		$('#'+args[0]).find("input[name='okbtn']").unbind("click");
+		$('#'+args[0]).find("input[name='okbtn']").bind('click',function(){
+			args[2].apply(this,args[1]);
+		});
+		//取消新建
+		$('#'+args[0]).find("input[name='canclebtn']").unbind("click");
+		$('#'+args[0]).find("input[name='canclebtn']").bind('click',function(){
+			args[3]();
+			$('#'+args[0]).css("display","none");
+		});
+	}
+	//右击事件
+	 function registerMenuContext(){
+	 	websiteContextMenu($(".website"));
+		picContextMenu($(".picture"));
+		txtContextMenu($(".textedit"));
+	}
+	//图片右击事件
+	function picContextMenu($t){
+		$t.smartMenu([
+			[{
+				text:"编辑图片",
+				func: function() {
+					initform("picdiv",$(this),function(t){
+							var bh=$("#picdiv input[name='picbh']").val();
+							var mc=$("#picdiv input[name='picmc']").val();
+							var pictitle=$("#picdiv input[name='pictitle']").val();
+							var picurl=$("#picdiv input[name='picurl']").val();
+							$(t).parents("li").find("img").attr("src",picurl);
+							
+							//标题
+							$(t).parents("li").find("span").each(function(k,v){
+								if($(this).text()=="图片"){
+									$(this).remove();
+								}
+							});
+							
+							var $domobj=$(t).parents("li").find(".sizeable").parent();
+							$domobj.find("input[name='bh']").val(bh);
+							$domobj.find("input[name='mc']").val(mc);
+							$domobj.find("input[name='bt']").val(pictitle);
+							$("#picdiv").css("display","none");
+						},function(){
+							
+						}
+					);
+					//var urlstr=prompt("请在下面输入链接地址", "");
+					//$(this).parents("li").find("img").attr("src",urlstr);
+				}
+			}],[{
+				text:"移除",
+				func:function(){
+					gridster.remove_widget($(this).parents("li"));
+				}
+			}]
+		],{name:"picture",
+		   beforeShow:function(){
+		   		//编辑是赋值
+				var $domobj=$(this).parents("li").find(".sizeable").parent();
+				var bh=$domobj.find("input[name='bh']").val();
+				var mc=$domobj.find("input[name='mc']").val();
+				var title=$domobj.find("input[name='bt']").val();
+				$("#picdiv input[name='picbh']").val(bh);
+				$("#picdiv input[name='picmc']").val(mc);
+				$("#picdiv input[name='pictitle']").val(title);
+				$("#picdiv input[name='picurl']").val($(this).parents("li").find("img").attr("src"));
+	   		}
+	   });
+	}
+	//网页右击事件
+	function websiteContextMenu($t){
+		$t.smartMenu([
+			[{
+				text:"编辑网页",
+				func: function() {
+					initform("websitediv",$(this),function(t){
+							var bh=$("#websitediv input[name='websitebh']").val();
+							var mc=$("#websitediv input[name='websitemc']").val();
+							var title=$("#websitediv input[name='websitetitle']").val();
+							var url=$("#websitediv input[name='websiteurl']").val();
+							$(t).parents("li").find("iframe").attr("src",url);
+							$("#websitediv").css("display","none");
+							
+							//标题
+							$(t).parents("li").find("span").each(function(k,v){
+								if($(this).text()=="网页"){
+									$(this).remove();
+								}
+							});
+							$(t).parents("li").find("span[name='websitespan']").html(title);
+							
+							var $domobj=$(t).parents("li").find(".sizeable").parent();
+							$domobj.find("input[name='bh']").val(bh);
+							$domobj.find("input[name='mc']").val(mc);
+							$domobj.find("input[name='bt']").val(title);
+							//console.info($(t).prop("outerHTML"));
+						},function(){
+							
+						}
+					);
+					//var urlstr=prompt("请在下面输入链接地址", "");
+					//alert($(this).find("iframe").attr("scrolling"));
+					//$(this).parents("li").find("iframe").attr("src",urlstr);
+				}
+			}],[{
+				text:"移除",
+				func:function(){
+					//console.info($(this).parents("li").html());
+					gridster.remove_widget($(this).parents("li"));
+				}
+			}]
+		],{name:"website",
+		   beforeShow:function(){
+		   		//编辑是赋值
+				var $domobj=$(this).parents("li").find(".sizeable").parent();
+				var bh=$domobj.find("input[name='bh']").val();
+				var mc=$domobj.find("input[name='mc']").val();
+				var title=$domobj.find("input[name='bt']").val();
+				$("#websitediv input[name='websitebh']").val(bh);
+				$("#websitediv input[name='websitemc']").val(mc);
+				$("#websitediv input[name='websitetitle']").val(title);
+				$("#websitediv input[name='websiteurl']").val($(this).parents("li").find("iframe").attr("src"));
+		   }
+		});
+	}
+	//文字右击事件
+	function txtContextMenu($t){
+		$t.smartMenu([
+			[{
+				text:"编辑文字",
+				func: function() {
+					initform("textdiv",$(this),function(t){
+							var bh=$("#textdiv input[name='txtbh']").val();
+							var mc=$("#textdiv input[name='txtmc']").val();
+							var content=$("#textdiv input[name='txtcontent']").val();
+							var size=$("#textdiv input[name='txtsize']").val();									
+							$(t).parents("li").find(".sizeable").html(content);
+							if(size.indexOf(".px")!=-1){
+								$(t).parents("li").find(".sizeable").css("fontSize",size);
+							}else{
+								$(t).parents("li").find(".sizeable").css("fontSize",size+"px");
+							}
+							
+							var $domobj=$(t).parents("li").find(".sizeable").parent();
+							$domobj.css("line-height",$domobj.height()/2+"px");
+							$domobj.find("input[name='bh']").val(bh);
+							$domobj.find("input[name='mc']").val(mc);
+							$("#textdiv").css("display","none");
+						},function(){
+							
+						}
+					);
+					//$(this).parents("li").find(".sizeable").html(urlstr);
+				}
+			}],[{
+				text:"移除",
+				func:function(){
+					//console.info($(this).parents("li").html());
+					gridster.remove_widget($(this).parents("li"));
+				}
+			}]
+		],{name:"textedit",
+		   beforeShow:function(){
+		   		//编辑是赋值
+				//console.info($(this).prop("outerHTML"));
+				var $domobj=$(this).parents("li").find(".sizeable").parent();
+				//var bh=$("#textdiv input[name='txtbh']").val();
+				var mc=$("#textdiv input[name='txtmc']").val();
+				$("#textdiv input[name='txtcontent']").val($domobj.find(".sizeable").html());
+				$("#textdiv input[name='txtsize']").val($domobj.find(".sizeable").css("fontSize"));		
+		   }
+		});
+	}
+	//remove事件 注册
+	function registerRemove(){
+		$(".removeable").unbind("click");
+		$(".removeable").bind("click",function(){
+			var id=$(this).prev().attr("caseid");
+			removecaseajax($(this),id)
+		});
+	}
+      ///最终保存
+      function finalsavecase(){
+    	  var $domobj=$("#case .selected").find("span").eq(0);
+    	  var id=$domobj.attr("caseid");  
+    	  modifycase({"id":id});
+      }
+      //修改
+      function modifycase(caseobj){
+    	  var id=caseobj.id;
+    	  var content=$("#rightdiv ul").html();
+    	  $.ajax({
+	           type: "POST",
+	           url: "http://localhost:8080/demo/modifyservlet",
+	           data: {"content":content,"id":id},
+	           dataType: "json",
+	           async:false,
+			   contentType: "application/x-www-form-urlencoded; charset=utf-8",
+	           success: function(data){
+	        	   alert(data);
+// 	          	 casesavepost(data.id,data.name);
+	           }
+	       });
+      }
+    ///保存方案
+		function savecase(caseobj){
+			var name=caseobj.name;
+			var content=$("#rightdiv ul").html();
+			 $.ajax({
+	           type: "POST",
+	           url: "http://localhost:8080/demo/savecase",
+	           data: {"content":content,"name":name},
+	           dataType: "json",
+	           async:false,
+			   contentType: "application/x-www-form-urlencoded; charset=utf-8",
+	           success: function(data){
+	          	 casesavepost(data.id,data.name);
+	           }
+	       });
+		}
+		//获取所有的方案名称
+		function showcase(){
+			 $.ajax({
+	           type: "POST",
+	           url: "http://localhost:8080/demo/holdallcase",
+	          // data: {"content":content,"name":name},
+	           async:false,
+	           dataType: "json",
+	           success: function(data){
+					$("#case ul").empty();
+				 	$.each(data,function(k,v){
+						casesavepost(v.id,v.name);
+					});
+	           }
+	       });
+		}
+    //获取一个方案名称
+	function holdcase(id){ 
+			$.ajax({
+	           type: "POST",
+	           url: "http://localhost:8080/demo/holdcase",
+	           data: {"id":id},
+	           dataType: "json",
+	           async:false,
+	           success: function(data){
+	          	 	//加判断 是否有方案内容
+	          	 	if(data!=null){
+							//首次加载 grid 插件未初始化
+							if(gridinited==0){
+								$("#rightdiv ul").empty();
+								$("#rightdiv ul").html(data.content);
+							}else if(gridinited==1){//grid 插件初始化完成
+								gridster.destroy(true); 
+								$("#rightdiv .gridster").html("<ul>"+data.content+"</ul>");
+								init();
+								registerinitedevent();
+							}
+	          	 	}else{
+// 	          	 		$("#rightdiv").append("<div class="gridster"><ul style="width:500px"></ul></div>");
+	          	 	}
+	           },error:function(){
+	//			 	alert("error");
+			 }
+       });
+	}
+    //后台删除
+	function removecaseajax(domobj,id){
+		 $.ajax({
+             type: "POST",
+             url: "http://localhost:8080/demo/removeonservlet",
+             data: {"id":id},
+             dataType: "json",
+             async:false,
+             success: function(data){
+            	 alert(data);
+            	if(data=="success"){
+            		$(domobj).parents("li").remove();
+					gridster.remove_all_widgets();
+            	}
+             },error:function(){
+            	 alert("aa");
+             }
+         });
+	}
+	//点击方案名称切换选中状态
+  	function casenamebindfunc(){
+		$("#case ul li div").bind("click",function(){
+			var clzzname=$(this).attr("class");
+			if(clzzname=="selected"){alert("1");
+				$(this).removeClass("selected");
+			}else{
+				//remove
+				gridster.remove_all_widgets();
+				//方案选中
+				casenameclick($(this).find("span").eq(0).attr("caseid"));
+				$(this).removeClass("unselected");
+				$(this).addClass("selected");
+				$(this).parent().siblings().find("div").attr("class","unselected");
+			}	
+		});
+	}
+    //点击方案名称
+	function casenameclick(caseid){
+		//显示方案内容
+		holdcase(caseid);
+	}
+	function showDiv(t) {
+      $(".moveable",t).css("display","block");
+    }
+	function hiddenDiv(t) {
+       $(".moveable",t).css("display","none");
+    }
+   	 //弹出新建方案界面
+	function savecasefunc(){
+		$('#caseform').css({ 
+			position:'absolute', 
+			left: ($(window).width() - $('#caseform').outerWidth())/2, 
+			top: ($(window).height() - $('#caseform').outerHeight())/2 + $(document).scrollTop() ,
+			display:"block"
+		}); 
+		//确认新建
+		$('#caseform').find("input[name='okbtn']").bind('click',function(){
+			var casename=$("input[name='casename']","#caseform").val();
+			//清空工作空间
+			clearworkspace();
+			//保存到后台
+			savecase({"name":casename});
+		});
+		//取消新建
+		$('#caseform').find("input[name='canclebtn']").bind('click',function(){
+			$('#caseform').css("display","none");
+			unbindclick();
+		});
+	}
+  	function clearworkspace(){ 
+  		gridster.destroy(true);
+		$("#rightdiv .gridster").html("<ul></ul>");
+		init();
+	}
+  	function casesavepost(caseid,casename){
+		var $li=$('<li><div><span caseid="'+caseid+'">'+casename+'</span>&nbsp;&nbsp;<span class="removeable">X</span></div></li>');
+		$("#case ul").append($li);
+		//绑定点击事件
+		$li.find("div").bind("click",function(){
+			var clzzname=$(this).attr("class");
+			if(clzzname=="selected"){
+				$(this).removeClass("selected");
+			}else{
+				//方案选中
+				casenameclick($(this).find("span").eq(0).attr("caseid"));
+				$(this).removeClass("unselected");
+				$(this).addClass("selected");
+				$(this).parent().siblings().find("div").attr("class","unselected");
+			}	
+		});
+		//绑定remove 事件
+		$li.find(".removeable").unbind("click");
+		$li.find(".removeable").bind("click",function(){
+			var id=$(this).prev().attr("caseid");
+			removecaseajax($(this),id)
+		});
+		//触发点击事件
+		$li.find("div").trigger("click");
+		
+		//新建方案表单 
+		unbindclick();
+		$('#caseform').css("display","none");
+	}
+	function unbindclick(){
+		$('#caseform').find("input[name='okbtn']").unbind("click");
+		$('#caseform').find("input[name='canclebtn']").unbind("click");
+	}
+	//预览方案
+	function previewcase(){
+		$("#rightdiv").css({
+			position:'absolute', 
+			left: 0, 
+			top: 0,
+			width:$(window).width(),
+			height:$(window).height()+ $(document).scrollTop() ,
+			display:"block"
+		});
+		/**var i = $.layer({
+		    type : 1,
+		    title : false,
+		    fix : false,
+		  //  offset:['50px' , ''],
+		    area : [$(window).width()+'px',$(window).height()+'px'],
+		    page : {dom : '#rightdiv'}
+		});*/
+	}
+	//最大化 iframe
+	function maxIframefunc(t){
+		var width=$(window).width()+'px';
+		var height=$(window).height()+'px';
+		$.layer({
+		    type: 2,
+		    shadeClose: true,
+		    title: false,
+		    closeBtn: [1, true],
+		    shade: [0.8, '#000'],
+		    border: [0],
+		    offset: ['',''],
+		    area: [($(window).width())+'px', ($(window).height()) +'px'],
+		    iframe: {src: $(t).parents("li").find("iframe").attr("src")}
+		}); 
+	}
+	//最大化 图片
+	function maxImageFun(t){
+		//console.info($(t).parents("li").find("img").parent().html());
+		layer.photosPage({
+			title: 'test',		//标题
+			parent: $(t).parents("li").find("img").parent(),	//包含图片的父容器
+			start: 0		//开始索引
+		})
+	}
+	//页面布局
+	function layoutinit(){
+		$("#container").css({
+			width:$(window).width(),
+			height:$(window).height()+ $(document).scrollTop() 
+		});
+		$("#mainContent").css({
+			width:$("#container").width(),
+			height:$("#container").height()-5
+		});
+		$("#sidebar").css({
+			height:$("#mainContent").height()
+		});
+		$("#content").css({
+			height:$("#mainContent").height()
+		});
+		$("#rightdiv").css({
+			height:$("#mainContent").height()-30
+		});
+	}
+    </script>
+</head>
+
+<body>
+<div style="right:0px;position:absolute">
+	<button class="toggle-menu menu-right ">组件</button>
+</div>
+<div class="cbp-spmenu cbp-spmenu-vertical cbp-spmenu-right">
+	<div class="window" >
+		<span>图片</span>
+	    <input type="hidden" name="classname" value="pic"></input>
+		<input type="hidden" name="bh" />
+		<input type="hidden" name="mc" />
+		<input type="hidden" name="bt" />
+		<img class="sizeable" src="http://www.baidu.com/img/baidu_jgylogo3.gif?v=13442422.gif" alt="" title="" width="100%" height="80%">
+	</div>
+	<div class="window" > 
+	 	<span>网页</span> 
+	     <input type="hidden" name="classname" value="website"></input>
+		 <input type="hidden" name="bh" />
+		 <input type="hidden" name="mc" />
+	 	 <input type="hidden" name="bt" /> 
+    	 <iframe class="sizeable" width="100%" height="50%" src="http://www.baidu.com/" scrolling="no" frameborder="0"></iframe> 
+	 </div>
+	<div class="window" style="line-height:80px"> 
+    	<input type="hidden" name="classname" value="text"></input> 
+		<input type="hidden" name="bh" />
+		<input type="hidden" name="mc" />
+		<input type="hidden" name="bt" />
+	 	<span class="sizeable" style="font-size:12px;text-align:center;display:block;">输入文字 </span>	
+ 	</div>
+</div>
+
+<div id="container">
+ 
+  <div id="mainContent">
+    <div id="sidebar">
+		<div style="background:#E1E1E1;height:30px;text-align:center;line-height:30px;">
+			方案
+		</div>
+	   <div id="case" style="border:solid 1px #fff;">
+		    <ul>
+		    	<li><div class="unselected"><span caseid="22222222">222222222222222222</span>&nbsp;&nbsp;<span class="removeable">X</span></div></li>
+		        <li><div><span>222222222222222222</span>&nbsp;&nbsp;<span class="removeable">X</span></div></li>
+		        <li><div><span>222222222222222222</span>&nbsp;&nbsp;<span class="removeable">X</span></div></li>
+		        <li><div><span>222222222222222222</span>&nbsp;&nbsp;<span class="removeable">X</span></div></li>
+		    </ul>
+		</div>
+
+    </div>
+    <div id="content">
+     	<div id="header">
+        	<input type="button" value="新建方案" onclick="savecasefunc();" />
+            <input type="button" value="保存方案" onclick="finalsavecase();" />
+            <input type="button" value="预览方案" onclick="previewcase();"/>
+        </div>
+        <div id="rightdiv">
+        	<div class="gridster">
+			    <ul style="width:500px">
+			    </ul>
+		  </div>
+        </div>
+    </div>
+  </div>
+</div>
+<div id="caseform" class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">新建方案</td>
+        </tr>
+    	<tr>
+        	<td>方案名称</td>
+            <td><input type="text" name="casename"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="picdiv" class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">编辑图片</td>
+        </tr>
+        <tr>
+        	<td>屏幕编号</td>
+            <td><input type="text" name="picbh"/></td>
+        </tr>
+        <tr>
+        	<td>屏幕名称</td>
+            <td><input type="text" name="picmc"/></td>
+        </tr>
+    	<tr>
+        	<td>图片标题</td>
+            <td><input type="text" name="pictitle"/></td>
+        </tr>
+        <tr>
+        	<td>图片链接</td>
+            <td><input type="text" name="picurl"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="textdiv" class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">编辑文字</td>
+        </tr>
+        <tr>
+        	<td>屏幕编号</td>
+            <td><input type="text" name="txtbh"/></td>
+        </tr>
+        <tr>
+        	<td>屏幕名称</td>
+            <td><input type="text" name="txtmc"/></td>
+        </tr>
+    	<tr>
+        	<td>文字内容</td>
+            <td><input type="text" name="txtcontent"/></td>
+        </tr>
+        <tr>
+        	<td>文字大小</td>
+            <td><input type="text" name="txtsize"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+<div id="websitediv"  class="selffrom">
+	<table>
+    	<tr>
+        	<td colspan="2" align="center">编辑网页</td>
+        </tr>
+        <tr>
+        	<td>屏幕编号</td>
+            <td><input type="text" name="websitebh"/></td>
+        </tr>
+        <tr>
+        	<td>屏幕名称</td>
+            <td><input type="text" name="websitemc"/></td>
+        </tr>
+    	<tr>
+        	<td>网页标题</td>
+            <td><input type="text" name="websitetitle"/></td>
+        </tr>
+        <tr>
+        	<td>网页链接</td>
+            <td><input type="text" name="websiteurl"/></td>
+        </tr>
+        <tr align="center">
+            <td colspan="2" align="center"><input type="button" name="okbtn" value="确认"/>&nbsp;&nbsp;&nbsp;<input type="button" name="canclebtn" value="取消"/></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+数据库用的是hsql
+在web.xml context-Parma 配置数据库路径
+
+注:
+hsql 数据库是一个目录 我放在WebContent/database 下

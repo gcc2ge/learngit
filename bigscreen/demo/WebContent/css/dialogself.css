@@ -1,0 +1,54 @@
+@CHARSET "UTF-8";
+#deldialog{
+	width:500px;
+	height:200px;
+	border-color:#E1E1E1;
+	border-width:1px;				
+	border-style:solid;
+	display:none;
+	position: absolute;
+	background:white;
+}
+.title{
+	width:100%;
+	height:30px;
+	display: block;
+	background-color: #E1E1E1;
+	line-height: 30px;
+}
+.diacontent{
+	width:73%;	
+	height: 34%;			
+		
+	text-align: center;	
+	padding-left: 102px;
+	padding-top: 34px;				
+
+}
+.ys{
+	float:left;
+	
+	height: 50px;
+	
+	line-height: 50px
+}
+.btnconform{
+	text-align: center;
+	padding-top: 10px;
+}
+#diaalert{
+	width: 326px;
+	height: 53px;
+	border-color: #E1E1E1;
+	border-width: 1px;
+	border-style: solid;
+	background-color: #E1E1E1;
+	text-align: center;
+	line-height: 137px;
+	font-size: 27px;
+	display: block;
+	vertical-align: middle;
+	padding-left: 26px;
+	padding-top: 20px;
+	display:none;
+}

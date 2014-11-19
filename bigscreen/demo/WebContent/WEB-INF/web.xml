@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>demo</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+  <context-param>  
+	<param-name>databaseurl</param-name>  
+	<param-value>D:\workspace\demo\WebContent\database</param-value>  
+</context-param> 
+  <listener>  
+        <listener-class>com.my.demo.TomcatListener</listener-class>  
+    </listener>  
+<servlet> 
+		<servlet-name>savecase</servlet-name> 
+		<servlet-class>com.my.demo.PageServlet</servlet-class> 
+	</servlet>
+	
+	<servlet-mapping> 
+		<servlet-name>savecase</servlet-name> 
+		<url-pattern>/savecase</url-pattern> 
+	</servlet-mapping> 
+	
+	
+	<servlet> 
+		<servlet-name>holdcase</servlet-name> 
+		<servlet-class>com.my.demo.HoldCaseServlet</servlet-class> 
+	</servlet>
+	
+	<servlet-mapping> 
+		<servlet-name>holdcase</servlet-name> 
+		<url-pattern>/holdcase</url-pattern> 
+	</servlet-mapping> 
+	
+	<servlet> 
+		<servlet-name>holdallcase</servlet-name> 
+		<servlet-class>com.my.demo.HoldAllCaseServlet</servlet-class> 
+	</servlet>
+	
+	<servlet-mapping> 
+		<servlet-name>holdallcase</servlet-name> 
+		<url-pattern>/holdallcase</url-pattern> 
+	</servlet-mapping> 
+	
+	<servlet> 
+		<servlet-name>cleanservlet</servlet-name> 
+		<servlet-class>com.my.demo.CleanServlet</servlet-class> 
+	</servlet>
+	
+	<servlet-mapping> 
+		<servlet-name>cleanservlet</servlet-name> 
+		<url-pattern>/cleanservlet</url-pattern> 
+	</servlet-mapping> 
+	
+	<servlet> 
+		<servlet-name>removeonservlet</servlet-name> 
+		<servlet-class>com.my.demo.RemoveOnServlet</servlet-class> 
+	</servlet>
+	
+	<servlet-mapping> 
+		<servlet-name>removeonservlet</servlet-name> 
+		<url-pattern>/removeonservlet</url-pattern> 
+	</servlet-mapping> 
+	
+	<servlet> 
+		<servlet-name>modifyservlet</servlet-name> 
+		<servlet-class>com.my.demo.ModifyServlet</servlet-class> 
+	</servlet>
+	
+	<servlet-mapping> 
+		<servlet-name>modifyservlet</servlet-name> 
+		<url-pattern>/modifyservlet</url-pattern> 
+	</servlet-mapping> 
+</web-app>
