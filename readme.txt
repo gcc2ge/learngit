@@ -15,3 +15,5 @@ http://blog.sina.com.cn/s/blog_6fa5aa4a01010wel.html
 
 google chorme frame
 http://rj.baidu.com/soft/detail/17803.html
+##
+http://mcpants.github.io/jquery.shapeshift/
